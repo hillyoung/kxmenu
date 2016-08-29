@@ -50,13 +50,7 @@
 
 @end
 
-@class KxMenuView;
-@interface KxMenu : NSObject 
-
-/**
- *  关于弹出框的单例
- */
-+ (instancetype) sharedMenu;
+@interface KxMenu : NSObject
 
 /**
  *  快速生成弹出框，使用的是单例
@@ -69,14 +63,27 @@
                fromRect:(CGRect)rect
               menuItems:(NSArray *)menuItems;
 
+/**
+ *  隐藏
+ */
 + (void) dismissMenu;
 
 + (UIColor *) tintColor;
+
+/**
+ *  设置背景色
+ *
+ *  @param tintColor 指定的背景色
+ */
 + (void) setTintColor: (UIColor *) tintColor;
 
-- (void)setBackgroudColor:(UIColor *)color;
-
 + (UIFont *) titleFont;
+
+/**
+ *  设置字体大小
+ *
+ *  @param titleFont 设置指定字体
+ */
 + (void) setTitleFont: (UIFont *) titleFont;
 
 @end

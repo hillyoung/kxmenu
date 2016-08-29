@@ -155,6 +155,12 @@ typedef enum {
     
 } KxMenuViewArrowDirection;
 
+@interface KxMenuView ()
+
+@property (strong, nonatomic) KxMenuOverlay *overlay;
+
+@end
+
 @implementation KxMenuView {
     
     KxMenuViewArrowDirection    _arrowDirection;
@@ -182,6 +188,16 @@ typedef enum {
 
 // - (void) dealloc { NSLog(@"dealloc %@", self); }
 
+- (KxMenuOverlay *)overlay {
+    if (!_overlay) {
+        _overlay = [[KxMenuOverlay alloc] init];
+        _overlay.translatesAutoresizingMaskIntoConstraints = NO;
+        [_overlay addSubview:self];
+    }
+
+    return _overlay;
+}
+
 - (void) setupFrameInView:(UIView *)view
                  fromRect:(CGRect)fromRect
 {
@@ -189,14 +205,14 @@ typedef enum {
     
     const CGFloat outerWidth = view.bounds.size.width;
     const CGFloat outerHeight = view.bounds.size.height;
-    
-    const CGFloat rectX0 = fromRect.origin.x;
-    const CGFloat rectX1 = fromRect.origin.x + fromRect.size.width;
-    const CGFloat rectXM = fromRect.origin.x + fromRect.size.width * 0.5f;
-    const CGFloat rectY0 = fromRect.origin.y;
-    const CGFloat rectY1 = fromRect.origin.y + fromRect.size.height;
-    const CGFloat rectYM = fromRect.origin.y + fromRect.size.height * 0.5f;;
-    
+
+    const CGFloat rectX0 = CGRectGetMinX(fromRect);
+    const CGFloat rectX1 = CGRectGetMaxX(fromRect);
+    const CGFloat rectXM = CGRectGetMidX(fromRect);
+    const CGFloat rectY0 = CGRectGetMinY(fromRect);
+    const CGFloat rectY1 = CGRectGetMaxY(fromRect);
+    const CGFloat rectYM = CGRectGetMidY(fromRect);;
+
     const CGFloat widthPlusArrow = contentSize.width + kArrowSize;
     const CGFloat heightPlusArrow = contentSize.height + kArrowSize;
     const CGFloat widthHalf = contentSize.width * 0.5f;
@@ -324,10 +340,13 @@ typedef enum {
     [self addSubview:_contentView];
     
     [self setupFrameInView:view fromRect:rect];
-        
-    KxMenuOverlay *overlay = [[KxMenuOverlay alloc] initWithFrame:view.bounds];
-    [overlay addSubview:self];
-    [view addSubview:overlay];
+
+    [self.overlay removeFromSuperview];
+    [view addSubview:self.overlay];
+    [view addConstraint:[NSLayoutConstraint constraintWithItem:self.overlay attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0]];
+    [view addConstraint:[NSLayoutConstraint constraintWithItem:self.overlay attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0]];
+    [view addConstraint:[NSLayoutConstraint constraintWithItem:self.overlay attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0]];
+    [view addConstraint:[NSLayoutConstraint constraintWithItem:self.overlay attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0]];
     
     _contentView.hidden = YES;
     const CGRect toFrame = self.frame;
@@ -419,7 +438,6 @@ typedef enum {
     
     for (KxMenuItem *menuItem in _menuItems) {
 
-//        const CGSize titleSize = [menuItem.title sizeWithFont:titleFont];
         const CGSize titleSize = [menuItem.title sizeWithAttributes:@{NSFontAttributeName: titleFont}];
         const CGSize imageSize = menuItem.image.size;
 
@@ -629,15 +647,19 @@ typedef enum {
              inContext:(CGContextRef) context
 {
     CGFloat R0 = 0.267, G0 = 0.303, B0 = 0.335;
-    CGFloat R1 = 0.040, G1 = 0.040, B1 = 0.040;
-    
+
     UIColor *tintColor = [KxMenu tintColor];
     if (tintColor) {
         
         CGFloat a;
         [tintColor getRed:&R0 green:&G0 blue:&B0 alpha:&a];
     }
-    
+
+    /**
+     *  取消渐变色
+     */
+    CGFloat R1 = R0, G1 = G0, B1 = B0;
+
     CGFloat X0 = frame.origin.x;
     CGFloat X1 = frame.origin.x + frame.size.width;
     CGFloat Y0 = frame.origin.y;
@@ -722,7 +744,6 @@ typedef enum {
     [arrowPath fill];
 
     // render body
-    
     const CGRect bodyFrame = {X0, Y0, X1 - X0, Y1 - Y0};
     
     UIBezierPath *borderPath = [UIBezierPath bezierPathWithRoundedRect:bodyFrame
@@ -740,7 +761,6 @@ typedef enum {
                                                                  locations,
                                                                  sizeof(locations)/sizeof(locations[0]));
     CGColorSpaceRelease(colorSpace);
-    
     
     [borderPath addClip];
     
@@ -875,10 +895,6 @@ static UIFont *gTitleFont;
     if (tintColor != gTintColor) {
         gTintColor = tintColor;
     }
-}
-
-- (void)setBackgroudColor:(UIColor *)color {
-    _menuView.backgroundColor = color;
 }
 
 + (UIFont *) titleFont
