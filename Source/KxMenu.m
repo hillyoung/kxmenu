@@ -873,6 +873,10 @@ static UIFont *gTitleFont;
     }
 }
 
+- (void)setBackgroudColor:(UIColor *)color {
+    _menuView.backgroundColor = color;
+}
+
 + (UIFont *) titleFont
 {
     return gTitleFont;
